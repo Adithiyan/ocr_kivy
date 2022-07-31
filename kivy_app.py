@@ -60,9 +60,69 @@ class LoginPage(layout):
 
         cwd = str(os.getcwd())
         targetFile=cwd+'\input_image\input_image'+str(self.new_bill_details.text)+'.jpg'
-        #Apply ocr here on target image
+        
+        #OCR
+        
+        import base64
+        import io
+        import json
+
+        import PIL
+        import matplotlib.pyplot as plt
+        import requests
+
+
+        def perform_query(base_url, path, method='GET', headers=None, data=None):
+            session = requests.Session()
+            if headers is not None:
+                resp = session.request(method, base_url + path, data=json.dumps(data) if data else None,
+                                       verify=True, headers=headers)
+            else:
+                resp = session.request(method, base_url + path, data=json.dumps(data))
+            try:
+                return resp.json()
+            except Exception as e:
+                print(f'json failed {e}')
+                return resp
+
+
+        def get_image_content(image_path):
+            with io.open(image_path, 'rb') as f:
+                image_content = f.read()
+            return base64.b64encode(image_content).decode()
+
+
+        def show_image(image_path, figsize=(10, 7)):
+            fig, ax = plt.subplots(figsize=figsize)
+            ax.imshow(PIL.Image.open(image_path))
+            return ax
+
+
+        def show_edges(ax, edges):
+            ax.plot([e[0] for e in edges] + [edges[0][0]], [e[1] for e in edges] + [edges[0][1]],
+                    color='green')
+    
+        import base64
+        import io
+        import os
+        from pprint import pprint
+
+        
+        TOKEN = 'github_users'
+        auth_header = {'Content-Type' : 'application/json',
+               'Authorization': f'{TOKEN}'}
+        BASE_URL_PARSER = 'https://tinvois-parser.azurewebsites.net/'
+        
+        img = targetFile
+        
+        
+        res3 = perform_query(BASE_URL_PARSER, 'parse', 'POST', headers=auth_header, 
+                    data={'image': get_image_content(img), 
+                          'edit_image': True,
+                          'try_auto_edit': True})
+        
         global data_from_ocr
-        #data_from_ocr=
+        data_from_ocr= res3
 
         key=today
         if key in Dict.keys():
